@@ -24,7 +24,7 @@ This deployment follows a standard **3-tier model**:
 - **CIDR Block**: `10.0.0.0/16`
 - **Tenancy**: Default
 
-![VPC Setup](vpc.png)
+![VPC Setup](screenshots/vpc.png)
 
 ---
 
@@ -36,7 +36,7 @@ This deployment follows a standard **3-tier model**:
 | `pvt-app-subnet`     | Private  | `10.0.2.0/24` | Tomcat Server (EC2)      |
 | `pvt-db-subnet`      | Private  | `10.0.3.0/24` | MySQL RDS (Database)     |
 
-![Subnet Setup](subnet.png)
+![Subnet Setup](screenshots/subnet.png)
 
 ---
 
@@ -45,7 +45,7 @@ This deployment follows a standard **3-tier model**:
 - **Name**: `3-tier-igw`
 - Attach to: `3-tier-vpc`
 
-![IGW Setup](create%20igw.png)
+![IGW Setup](screenshots/create%20igw.png)
 
 ---
 
@@ -66,18 +66,18 @@ This deployment follows a standard **3-tier model**:
 - Add route: `0.0.0.0/0 → IGW`
 - Associate with: `public-subnet`
 
-!(![pub-RT](<add igw to pub-RT.png>)
+![pub-RT](<screenshots/add igw to pub-RT.png>)
 
 #### 🔹 Private Route Table
 
 - **Name**: `private-rt`
 - Add route: `0.0.0.0/0 → NAT Gateway`
 
-![pvt-RT](<add NAT to pvt-RT.png>)
+![pvt-RT](<screenshots/add NAT to pvt-RT.png>)
 
 - Associate with: `app-subnet`, `db-subnet`
 
-![sub_assocition](<subnet association.png>)
+![sub_assocition](<screenshots/subnet association.png>)
 ---
 
 ## 🚀 Application Deployment
@@ -97,7 +97,7 @@ Assign appropriate security groups to allow:
 - HTTP traffic from Proxy to App Server (port 8080)
 - MySQL access from App Server only (port 3306)
 
-![instances](<launch 3 instances.png>)
+![instances](<screenshots/launch 3 instances.png>)
 ---
 
 2. **Install Java & Tomcat:**
@@ -225,14 +225,14 @@ After setting up the Proxy, App, and DB servers with all configurations, perform
 
 Open a web browser and enter the public IP of the Proxy Server:
 
-![student_form](<stud reg form.png>)
+![student_form](<screenshots/stud reg form.png>)
 
 This request will go through:
 - NGINX on the Proxy Server (Public Subnet)
 - → to Tomcat on the App Server (Private Subnet)
 - → which connects to the MySQL database on the DB Server (Private Subnet or RDS)
 
-![mysql_entry](<student table.png>)
+![mysql_entry](<screenshots/student table.png>)
 
 #### 🧪 Test Functionalities
 
