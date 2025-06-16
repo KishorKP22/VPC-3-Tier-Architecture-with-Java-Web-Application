@@ -1,176 +1,91 @@
-# 🎓 Student Management Web Application – AWS 3-Tier VPC Deployment Guide
+# Secure Java Web Application – 3-Tier Architecture on AWS (VPC Based)
 
-## 📌 Overview
-
-This project is a Java-based **Student Management System** deployed on **AWS** using a secure and scalable **3-tier VPC architecture**. It allows you to manage student records — add, edit, delete, and list — through a web interface.
+This project demonstrates the deployment of a Java-based Student Management Web Application using a secure 3-tier architecture on AWS. The architecture consists of a Proxy Server (NGINX), App Server (Tomcat), and DB Server (MySQL RDS), deployed inside a custom VPC setup.
 
 ---
 
-## 🧱 3-Tier Architecture Overview
+## 📦 Application Features
 
-This deployment follows a standard **3-tier model**:
-
-1. **Public Layer**: Bastion(proxy) Host (SSH access only)
-2. **Application Layer**: EC2 instance running Apache Tomcat and Java WAR file
-3. **Database Layer**: MySQL RDS instance in a private subnet
-
----
-
-## 🛠️ Infrastructure Setup – Step-by-Step
-
-### ✅ Step 1: Create VPC
-
-- **Name**: `3-tier-vpc`
-- **CIDR Block**: `10.0.0.0/16`
-- **Tenancy**: Default
-
-![VPC Setup](screenshots/vpc.png)
+- Manage student records via web interface
+- Add, update, delete, and list students
+- Java backend using `student.war`
+- Tomcat server to host the WAR
+- MySQL database for persistent storage (RDS)
+- Secure network design using AWS VPC
 
 ---
 
-### ✅ Step 2: Create 3 Subnets
+## 🌐 Architecture Overview
 
-| Subnet Name     | Type     | CIDR Block   | Purpose                |
-|------------------|----------|---------------|--------------------------|
-| `public-subnet`  | Public   | `10.0.1.0/24` | Bastion Host (SSH)       |
-| `pvt-app-subnet`     | Private  | `10.0.2.0/24` | Tomcat Server (EC2)      |
-| `pvt-db-subnet`      | Private  | `10.0.3.0/24` | MySQL RDS (Database)     |
-
-![Subnet Setup](screenshots/subnet.png)
-
----
-
-### ✅ Step 3: Create Internet Gateway (IGW)
-
-- **Name**: `3-tier-igw`
-- Attach to: `3-tier-vpc`
-
-![IGW Setup](screenshots/create%20igw.png)
+- **VPC** with 3 Subnets: 1 public, 2 private
+- **1 Internet Gateway** for public access
+- **1 NAT Gateway** for private instances to access the internet
+- **Public Route Table** attached to public subnet
+- **Private Route Table** attached to private subnets
+- **Instances:**
+  - Proxy Server (NGINX) – Public Subnet
+  - App Server (Tomcat) – Private Subnet
+  - DB Server (MySQL RDS) – Private Subnet
 
 ---
 
-### ✅ Step 4: Create NAT Gateway
+## ✅ Step-by-Step Deployment
 
-- Launch a **NAT Gateway** in the `public-subnet`
-- Allocate an **Elastic IP**
+### ✅ Step 1: Create VPC and Subnets
 
-![NAT Setup](create%20NAT.png)
+- Create VPC with CIDR block `10.0.0.0/16`
+- Create 1 Public Subnet and 2 Private Subnets in different AZs
+- Enable Auto-assign Public IP for public subnet
 
----
+### ✅ Step 2: Configure Internet Gateway and Route Tables
 
-### ✅ Step 5: Route Tables
+- Attach Internet Gateway (IGW) to VPC
+- Create Public Route Table → Add route to IGW → Associate with public subnet
+- Create Private Route Table → Add route to NAT Gateway → Associate with private subnets
 
-#### 🔹 Public Route Table
+### ✅ Step 3: Launch EC2 Instances
 
-- **Name**: `public-rt`
-- Add route: `0.0.0.0/0 → IGW`
-- Associate with: `public-subnet`
+- Launch 3 EC2 instances:
+  - `proxy-server` (Amazon Linux 2) – Public Subnet
+  - `app-server` (Amazon Linux 2) – Private Subnet
+  - `db-server` (use RDS instead of EC2) – Private Subnet
+- Use correct key pairs and assign security groups
 
-![pub-RT](<screenshots/add igw to pub-RT.png>)
+### ✅ Step 4: Create RDS MySQL Instance
 
-#### 🔹 Private Route Table
+- Choose RDS → MySQL
+- Set DB instance identifier (e.g. `student-db`)
+- Set username and password
+- Place inside VPC and private subnet group
+- Ensure security group allows access on port `3306` from `app-server`
 
-- **Name**: `private-rt`
-- Add route: `0.0.0.0/0 → NAT Gateway`
-
-![pvt-RT](<screenshots/add NAT to pvt-RT.png>)
-
-- Associate with: `app-subnet`, `db-subnet`
-
-![sub_assocition](<screenshots/subnet association.png>)
----
-
-## 🚀 Application Deployment
-
----
-
-### ✅ Step 6: Launch EC2 Instances
-
-1. **Launch three EC2 instances in the respective subnets:**
-
-- **Proxy Server** (Public Subnet): Install and configure NGINX as a reverse proxy
-- **App Server** (Private Subnet): Deploy Apache Tomcat and the `student.war` file
-- **DB Server** (Private Subnet): Install MySQL to manage student records
-
-Assign appropriate security groups to allow:
-- SSH from Bastion or trusted IPs
-- HTTP traffic from Proxy to App Server (port 8080)
-- MySQL access from App Server only (port 3306)
-
-![instances](<screenshots/launch 3 instances.png>)
----
-
-2. **Install Java & Tomcat:**
-   ```bash
-   sudo yum update -y
-   sudo yum install java-1.8.0-openjdk -y
-   cd /opt
-   curl -O https://downloads.apache.org/tomcat/tomcat-9/v9.0.86/bin/apache-tomcat-9.0.86.tar.gz
-   sudo tar -xvzf apache-tomcat-9.0.86.tar.gz
-   sudo mv apache-tomcat-9.0.86 tomcat
-
-3. **Deploy student.war to Tomcat:**
-      ```bash
-      sudo cp student.war /opt/tomcat/webapps/
-
-4. **Deploy student.war to Tomcat:**
-      ```bash 
+### ✅ Step 5: Install and Configure Apache Tomcat on App Server
+      sudo yum update -y
+      sudo yum install java-1.8.0-openjdk -y
+      cd /opt
+      sudo wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.85/bin/apache-tomcat-9.0.85.tar.gz
+      sudo tar -xvzf apache-tomcat-9.0.85.tar.gz
+      sudo mv apache-tomcat-9.0.85 tomcat
       cd /opt/tomcat/bin
-      ./catalina.sh start
+      sudo chmod +x *.sh
+      ./startup.sh
 
----
+## ✅ Step 6: Deploy `student.war` to Tomcat
+      sudo cp student.war /opt/tomcat/webapps/
+      cd /opt/tomcat/bin
+      ./shutdown.sh
+      ./startup.sh
 
-### ✅ Step 7: Add MySQL JDBC Connector
-
-1. **Download the connector:**
-      ```bash 
+## ✅ Step 7: Download and Add MySQL Connector
       cd /opt/tomcat/lib
-      curl -O https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-java-8.0.33.tar.gz
+      wget https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-java-8.0.33.tar.gz
       tar -xvzf mysql-connector-java-8.0.33.tar.gz
-      sudo cp mysql-connector-java-8.0.33/mysql-connector-java-8.0.33.jar .
+      cp mysql-connector-java-8.0.33/mysql-connector-java-8.0.33.jar.
 
+### ✅ Step 8: Configure Tomcat's context.xml
+- Edit the file: /opt/tomcat/conf/context.xml
 
-2. **Ensure it's mysql.connector.jar available in /opt/tomcat/lib for JDBC to work:**
----
-
-### ✅ Step 8: Create RDS (MySQL) in Private Subnet
-
-1. **Create RDS (MySQL) in Private Subnet**
-
-   -  Engine: MySQL
-
-   -  Version: 8.x
-
-   -  DB Name: rdsdb
-
-   -  Master Username: admin
-
-   -  Password: yourpassword
-
-   -  VPC: 3-tier-vpc
-
-   -  Subnet Group: Select db-subnet
-
-   -  Public Access: NO
-
-   -  Security Group: select rds-sg
-
-   ---
-
-### ✅ Step 9: Configure Application with RDS
-
-Configure the Java application to connect to the RDS or DB Server by adding the JDBC connection in the Tomcat `context.xml` file.
-
-#### 🛠️ Update `context.xml`
-
-Edit the file at:  
-`/opt/tomcat/conf/context.xml`
-
-Add the following inside the `<Context>` tag:
-
-Resource 
-         
-          name="jdbc/studentdb" 
+      <Resource name="jdbc/studentdb" 
           auth="Container"
           type="javax.sql.DataSource"
           maxTotal="100"
@@ -179,32 +94,16 @@ Resource
           username="admin"
           password="yourpassword"
           driverClassName="com.mysql.cj.jdbc.Driver"
-          url="jdbc:mysql://your-rds-endpoint:3306/rdsdb"
+          url="jdbc:mysql://<rds-endpoint>:3306/studentdb"/>
+---
 
-- Replace <rds-endpoint> with the actual RDS endpoint or the private IP of your MySQL EC2 instance
-- Ensure the username and password match your DB credentials.
-
-🔁 Restart Tomcat Server
-
-    cd /opt/tomcat/bin 
-    ./catalina.sh start
-   
-### ✅ Step 10: Set Up Reverse Proxy with NGINX
-
-The Proxy Server (public subnet) uses NGINX to forward HTTP requests to the App Server (private subnet) where the Tomcat application is running.
-
-#### ⚙️ Install NGINX on Proxy Server
-      sudo (yum) install nginx1 -y
+## ✅ Step 9: Configure Proxy Server (NGINX)
+      sudo amazon-linux-extras install nginx1 -y
       sudo systemctl enable nginx
       sudo systemctl start nginx
-
-- 📄 Configure nginx.conf
-
-      sudo nano /etc/nginx/nginx.conf
-
-- Inside the server block add like this:
+- Edit the file /etc/nginx/nginx.conf and add the following under the http block:
       server {
-       listen 80;
+      listen 80;
 
       location / {
         proxy_pass http://<app-server-private-ip>:8080/student/;
@@ -213,55 +112,69 @@ The Proxy Server (public subnet) uses NGINX to forward HTTP requests to the App 
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
        }
       }
+- Replace <app-server-private-ip> with your actual private IP of the app server.
+- Restart NGINX : 
 
-- 🔁 Replace <app-server-private-ip> with the private IP of your App Server EC2 instance.
-- Restart nginx service
+      sudo systemctl restart nginx
 
-### ✅ Step 11: Verify and Test the Full 3-Tier Application
+## ✅ Step 10: Test the Application
+- In your browser, visit :
 
-After setting up the Proxy, App, and DB servers with all configurations, perform end-to-end testing.
+      http://<proxy-server-public-ip>/
 
-#### 🌐 Access the Application
+Now we should see the Student Management Web Application. Try the following:
 
-Open a web browser and enter the public IP of the Proxy Server:
+- Add a student
+- View all students
+- Edit and delete student records
+---
+## ✅ Step 11: Verify Database Connection (RDS)
+   - Connect to RDS from app server or using a MySQL client:
 
-![student_form](<screenshots/stud reg form.png>)
+         mysql -h <rds-endpoint> -u admin -p
+         USE studentdb;
+         SELECT * FROM student;
 
-This request will go through:
-- NGINX on the Proxy Server (Public Subnet)
-- → to Tomcat on the App Server (Private Subnet)
-- → which connects to the MySQL database on the DB Server (Private Subnet or RDS)
+- Make sure your security group for RDS allows access from the app server's private IP.
 
-![mysql_entry](<screenshots/student table.png>)
+## 📘 Final Project Summary
+- Project Title: Secure Java Web App on AWS using 3-Tier VPC Architecture
 
-#### 🧪 Test Functionalities
+### Components:
 
-Use the UI to test these actions:
+- Java backend using WAR file
+- Apache Tomcat as App Server
+- Amazon RDS (MySQL) as DB Server
+- NGINX on Proxy Server
 
-- ✅ Add new student records
-- ✅ Edit existing student details
-- ✅ Delete students
-- ✅ View all student records
+### Infrastructure:
 
-#### 📋 Additional Verifications
+-  VPC with 1 Public Subnet and 2 Private Subnets
+- Internet Gateway for public access
+- NAT Gateway for private subnet outbound access
+- 3 EC2 Instances (Proxy, App, DB/RDS)
 
-- NGINX is successfully forwarding traffic to Tomcat
-- Tomcat is running and serving the `student.war` file
-- MySQL connector is working and DB connection is active
-- Database entries are being updated properly
+### Security:
 
-#### 📁 Logs (Optional)
+- Access managed via Security Groups
+- Public only for NGINX
+- Private for App and RDS
 
-To debug issues, check:
-- **NGINX logs**: `/var/log/nginx/access.log` and `error.log`
-- **Tomcat logs**: `/opt/tomcat/logs/`
-- **MySQL logs** (if on EC2): `/var/log/mysqld.log`
+### Goal:
+
+- Secure and scalable deployment of a Java web app with persistent storage and modular design
+---
+
+
+## 🙋‍♂️ Author
+
+- Deployed and configured by **Kishor Borse**  
+- This project reflects a complete hands-on implementation of AWS services for a secure 3-tier Java web application setup.
 
 ---
 
-✅ With this, your Student Management Web App is fully deployed on a secure AWS 3-tier architecture.
----
+## 🙏 Thank You
 
-### 🙋‍♂️ Author
-
-This project setup and deployment was completed by **Kishor Borse**.
+- Thanks for reviewing this deployment project.  
+- This project showcases how to practically implement a secure VPC-based 3-tier architecture using AWS services like EC2, RDS, NGINX, Tomcat, and MySQL.  
+Hope this helps others build production-ready applications on the cloud with confidence.
