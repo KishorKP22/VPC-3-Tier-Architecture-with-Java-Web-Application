@@ -34,14 +34,32 @@ This project demonstrates the deployment of a Java-based Student Management Web 
 ### ✅ Step 1: Create VPC and Subnets
 
 - Create VPC with CIDR block `10.0.0.0/16`
+
+![VPC](screenshots/vpc.png)
+---
 - Create 1 Public Subnet and 2 Private Subnets in different AZs
+
+![Subnets](screenshots/subnet.png)
+---
 - Enable Auto-assign Public IP for public subnet
 
 ### ✅ Step 2: Configure Internet Gateway and Route Tables
 
 - Attach Internet Gateway (IGW) to VPC
+
+![Attached IGW to VPC](<screenshots/create igw.png>)
+---
+
 - Create Public Route Table → Add route to IGW → Associate with public subnet
+
+![pub-RT](<screenshots/add igw to pub-RT.png>)
+---
 - Create Private Route Table → Add route to NAT Gateway → Associate with private subnets
+
+![pvt-RT](<screenshots/add NAT to pvt-RT.png>)
+---
+![pvt-subnet-association](<screenshots/subnet association.png>)
+---
 
 ### ✅ Step 3: Launch EC2 Instances
 
@@ -51,6 +69,9 @@ This project demonstrates the deployment of a Java-based Student Management Web 
   - `db-server` (use RDS instead of EC2) – Private Subnet
 - Use correct key pairs and assign security groups
 
+![instances](<screenshots/launch 3 instances.png>)
+---
+
 ### ✅ Step 4: Create RDS MySQL Instance
 
 - Choose RDS → MySQL
@@ -58,6 +79,9 @@ This project demonstrates the deployment of a Java-based Student Management Web 
 - Set username and password
 - Place inside VPC and private subnet group
 - Ensure security group allows access on port `3306` from `app-server`
+
+![RDS](screenshots/rds.png)
+---
 
 ### ✅ Step 5: Install and Configure Apache Tomcat on App Server
       sudo yum update -y
@@ -127,6 +151,10 @@ Now we should see the Student Management Web Application. Try the following:
 - Add a student
 - View all students
 - Edit and delete student records
+
+![reg_form](<screenshots/stud reg form.png>)
+---
+![list](<screenshots/student list.png>)
 ---
 ## ✅ Step 11: Verify Database Connection (RDS)
    - Connect to RDS from app server or using a MySQL client:
@@ -134,6 +162,8 @@ Now we should see the Student Management Web Application. Try the following:
          mysql -h <rds-endpoint> -u admin -p
          USE studentdb;
          SELECT * FROM student;
+
+![SQL_Db](<screenshots/student table.png>)
 
 - Make sure your security group for RDS allows access from the app server's private IP.
 
